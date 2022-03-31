@@ -7,6 +7,8 @@ import Typography from '@mui/material/Typography';
 import { makeStyles } from '@mui/styles';
 import { REGULATIONS } from './safetyRegulationConfig';
 import { isTwoPointsTooClose } from './ViewerHelper';
+import CircularProgress from '@mui/material/CircularProgress';
+
 
 const onError = (e) => console.error(e);
 
@@ -17,6 +19,7 @@ const App = () => {
   const [modelRegulation, setModelRegulation] = useState({});
   const [currentTags, setCurrentTags] = useState([]);
   const [headerContent, setHeaderContent] = useState();
+  const [showPreloader, setShowPreloader] = useState(false);
 
   useEffect(() => {
     // Viewer configuration object
@@ -36,8 +39,8 @@ const App = () => {
       // Cache selected element indices	
       selectedElementIndices = e.selectedElementIndices;
     });
-    
-    
+
+
     // viewer.addCustomButton("button-setColor", "flare", "#e91e63", "Highlight", () => {
     //   if (!selectedElementIndices || selectedElementIndices.length === 0) {
     //     viewer.showDialog("Warning", "No element is selected.", "Close", null, null, true);
@@ -60,6 +63,7 @@ const App = () => {
     // Callbacks
     let onPorgress = (e) => {
       console.log(e);
+      setShowPreloader(true);
       viewer.showDialog("Loading...", "Progress:" + e.progress, "Close", null, null, true);
     };
     let onLoaded = (e) => {
@@ -89,8 +93,9 @@ const App = () => {
 
         //add tags
         Object.keys(regulations).map((k) => {
-          addTagsByRegulation(viewer, k, regulations[k]);
+          addTagsByRegulation(viewer, k, regulations[k], regulations);
         });
+
       }, onError);
     };
 
@@ -98,7 +103,7 @@ const App = () => {
     viewer.loadModel(modelConfigs, onPorgress, onLoaded, onError);
   }, []);
 
-  const addTagsByRegulation = (viewer, number, regulation) => {
+  const addTagsByRegulation = (viewer, number, regulation, regulations) => {
     // Filter out safety elements
     let propertyFilter1 = new bimU.PropertyFilter("Text", "勞安_法規內容", regulation);
     propertyFilter1.operator = bimU.OperatorsEnum.CONTAINS;
@@ -115,30 +120,34 @@ const App = () => {
       bbox.getCenter(centroid);
       let location = new window.THREE.Vector3(bbox.max.x, bbox.max.y, bbox.max.z + 0.25);
       // Offset location if there is tag already
-      currentTags.map((t)=>{
-        if(isTwoPointsTooClose(t.location, location, 0.5)){
-          location.z+=0.4;
+      currentTags.map((t) => {
+        if (isTwoPointsTooClose(t.location, location, 0.5)) {
+          location.z += 0.4;
         }
       });
       let uuid = viewer.addTag(number, location, { fontSize: 50 }, () => {
         viewer.showDialog("", regulation, "關閉", null, null, true);
       });
-      
+
       let tags = currentTags;
-      tags.push({uuid: uuid, location: location, number: number, regulation: regulation, elementIndexArray: elementIndexArray});
+      tags.push({ uuid: uuid, location: location, number: number, regulation: regulation, elementIndexArray: elementIndexArray });
       setCurrentTags(tags);
+
+      if(tags.length==Object.keys(regulations).length){
+        setShowPreloader(false);
+      }
     }, onError);
   };
 
   useEffect(() => {
     Object.keys(modelRegulation).map((k) => {
-      window.viewer.addCustomButton(`regulation_${k}`, `collection-item-${k}`, "#e91e63", `${modelRegulation[k]}`, () => highlightElements(window.viewer, k, modelRegulation[k]));
+      window.viewer.addCustomButton(`regulation_${k}`, `collection-item-${k}`, "#e91e63", "", () => highlightElements(window.viewer, k, modelRegulation[k]));
     });
 
   }, [modelRegulation]);
 
   const highlightElements = (viewer, number, regulation) => {
-    setHeaderContent(regulation);
+    setHeaderContent(`[${number}] ${regulation}`);
     // Filter out safety elements
     let propertyFilter1 = new bimU.PropertyFilter("Text", "勞安_法規內容", regulation);
     propertyFilter1.operator = bimU.OperatorsEnum.CONTAINS;
@@ -155,7 +164,7 @@ const App = () => {
       viewer.toggleSectionbox(true);
       viewer.zoomToFit();
       viewer.toggleSectionbox(false);
-      setTimeout(()=>{viewer.resetVisibility();}, 1000);
+      setTimeout(() => { viewer.resetVisibility(); }, 1000);
 
     }, onError);
   }
@@ -166,9 +175,14 @@ const App = () => {
     <React.Fragment>
       <Box position="relative" style={{ width: window.innerWidth, height: window.innerHeight }}>
         <Box id="viewer-overlay" className={classes.viewerOverlay}>
-          <Typography variant="h6" gutterBottom component="div">
+          <Typography variant="h6" className={classes.headerContent} gutterBottom component="div">
             {headerContent}
           </Typography>
+          {showPreloader ? (
+            <Box style={{ marginLeft: window.innerWidth / 2, marginTop: window.innerHeight / 2 }}>
+              <CircularProgress />
+            </Box>
+          ) : undefined}
         </Box>
         <div id="viewer" className={classes.viewerContainer}></div>
 
@@ -183,14 +197,16 @@ const useStyles = makeStyles((theme) => ({
     position: 'absolute',
     width: 'auto',
     height: 'auto',
-    paddingLeft: '15px',
-    paddingRight: '15px',
-    backgroundColor: 'rgba(40, 215, 107, 0.46)',
   },
   viewerContainer: {
     textAlign: 'center',
     width: '100%',
     height: '100%',
+  },
+  headerContent: {
+    backgroundColor: 'rgba(40, 215, 107, 0.46)',
+    paddingLeft: '15px',
+    paddingRight: '15px',
   }
 }));
 
