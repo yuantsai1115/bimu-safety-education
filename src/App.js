@@ -141,32 +141,28 @@ const App = () => {
 
   useEffect(() => {
     Object.keys(modelRegulation).map((k) => {
-      window.viewer.addCustomButton(`regulation_${k}`, `collection-item-${k}`, "#e91e63", "", () => highlightElements(window.viewer, k, modelRegulation[k]));
+      window.viewer.addCustomButton(`regulation_${k}`, `collection-item-${k}`, "#e91e63", "", () => highlightElements(window.viewer, k, modelRegulation[k], currentTags));
     });
 
   }, [modelRegulation]);
 
-  const highlightElements = (viewer, number, regulation) => {
+  const highlightElements = (viewer, number, regulation, tags) => {
     setHeaderContent(`[${number}] ${regulation}`);
-    // Filter out safety elements
-    let propertyFilter1 = new bimU.PropertyFilter("Text", "勞安_法規內容", regulation);
-    propertyFilter1.operator = bimU.OperatorsEnum.CONTAINS;
-    // Return element index
-    let propertySelector1 = new bimU.PropertySelector(null, "eIdx");
-    viewer.getElementDataByProperty([propertyFilter1], [propertySelector1], 1000, (data) => {
-      //console.log(data);
-      viewer.resetVisibility();
-      let elementIndexArray = data.map(element => Number(element.eIdx));
-      viewer.setColor(elementIndexArray, new window.THREE.Color(0xff0000));
+    let elementIndexArray = [];
+    tags.map((t)=>{
+      if(number==t.number){
+        elementIndexArray = t.elementIndexArray;
+      }
+    });
+    
+    viewer.setColor(elementIndexArray, new window.THREE.Color(0xff0000));
 
-      let bbox = viewer.getBoundingBox(elementIndexArray);
+    let bbox = viewer.getBoundingBox(elementIndexArray);
       viewer.setSectionBox(bbox.min, bbox.max);
       viewer.toggleSectionbox(true);
       viewer.zoomToFit();
       viewer.toggleSectionbox(false);
       setTimeout(() => { viewer.resetVisibility(); }, 1000);
-
-    }, onError);
   }
 
 
