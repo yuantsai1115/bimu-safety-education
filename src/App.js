@@ -78,7 +78,7 @@ const App = () => {
       let propertySelector2 = new bimU.PropertySelector("Text", "勞安_法規內容");
       let propertySelector3 = new bimU.PropertySelector("Text", "勞安_法規編號");
 
-      viewer.getElementDataByProperty([propertyFilter1], [propertySelector1, propertySelector2, propertySelector3], 1000, (data) => {
+      viewer.getElementDataByProperty([propertyFilter1], [propertySelector1, propertySelector2, propertySelector3], 1000, async (data) => {
         //console.log(data);
         let regulations = {};
         data.map((d) => {
@@ -90,12 +90,10 @@ const App = () => {
         });
         //console.log(regulations);
         setModelRegulation(regulations);
-
-        //add tags
-        Object.keys(regulations).map((k) => {
-          addTagsByRegulation(viewer, k, regulations[k], regulations);
-        });
-
+        
+        //add tags and buttons
+        addTagsAndButtonsByRegulations(viewer, regulations);
+        
       }, onError);
     };
 
@@ -103,66 +101,78 @@ const App = () => {
     viewer.loadModel(modelConfigs, onPorgress, onLoaded, onError);
   }, []);
 
-  const addTagsByRegulation = (viewer, number, regulation, regulations) => {
-    // Filter out safety elements
-    let propertyFilter1 = new bimU.PropertyFilter("Text", "勞安_法規內容", regulation);
-    propertyFilter1.operator = bimU.OperatorsEnum.CONTAINS;
-    // Return element index
-    let propertySelector1 = new bimU.PropertySelector(null, "eIdx");
-
-    viewer.getElementDataByProperty([propertyFilter1], [propertySelector1], 1000, (data) => {
-      //console.log(data);
-      viewer.resetVisibility();
-      let elementIndexArray = data.map(element => Number(element.eIdx));
-      // viewer.setColor(elementIndexArray, new window.THREE.Color(0xff0000));
-      let bbox = viewer.getBoundingBox(elementIndexArray);
-      let centroid = new window.THREE.Vector3();
-      bbox.getCenter(centroid);
-      let location = new window.THREE.Vector3(bbox.max.x, bbox.max.y, bbox.max.z + 0.25);
-      // Offset location if there is tag already
-      currentTags.map((t) => {
-        if (isTwoPointsTooClose(t.location, location, 0.5)) {
-          location.z += 0.4;
-        }
-      });
-      let uuid = viewer.addTag(number, location, { fontSize: 50 }, () => {
-        viewer.showDialog("", regulation, "關閉", null, null, true);
-      });
-
-      let tags = currentTags;
-      tags.push({ uuid: uuid, location: location, number: number, regulation: regulation, elementIndexArray: elementIndexArray });
-      setCurrentTags(tags);
-
-      if(tags.length==Object.keys(regulations).length){
-        setShowPreloader(false);
-      }
-    }, onError);
-  };
-
-  useEffect(() => {
-    Object.keys(modelRegulation).map((k) => {
-      window.viewer.addCustomButton(`regulation_${k}`, `collection-item-${k}`, "#e91e63", k, () => highlightElements(window.viewer, k, modelRegulation[k], currentTags));
+  const addTagsAndButtonsByRegulations = async (viewer, regulations) => {
+    let tags = [];
+    //get eIdx by regulations
+    let selectExpression = `"eIdx" AS "eIdx", "Text:勞安_法規編號" AS "勞安_法規編號"`;
+    let filterExpressions = [];
+    Object.keys(regulations).map((n) => {
+      filterExpressions.push(`"Text:勞安_法規內容" LIKE '%${regulations[n]}%'`);
     });
+    let filterExpression = `${filterExpressions.join(' OR ')}`;
 
-  }, [modelRegulation]);
+    viewer.getElementDataByQuery(filterExpression, selectExpression, 1000, (data) => {
+      // console.log(data);
+      let eIdxByRegulation = {};
+      data.map((d) => {
+        d.勞安_法規編號.split('@').map((number) => {
+          if (Array.isArray(eIdxByRegulation[number])) {
+            eIdxByRegulation[number].push(parseInt(d.eIdx));
+          } else {
+            eIdxByRegulation[number] = [parseInt(d.eIdx)];
+          }
+        });
+      });
+      // console.log(eIdxByRegulation);
+
+      // add tags
+      viewer.resetVisibility();
+      Object.keys(eIdxByRegulation).map((number) => {
+        let elementIndexArray = eIdxByRegulation[number];
+        let regulation = regulations[number];
+        let bbox = viewer.getBoundingBox(elementIndexArray);
+        let centroid = new window.THREE.Vector3();
+        bbox.getCenter(centroid);
+        let location = new window.THREE.Vector3(bbox.max.x, bbox.max.y, bbox.max.z + 0.25);
+        tags.map((t) => {
+          if (isTwoPointsTooClose(t.location, location, 0.5)) {
+            location.z += 0.4;
+          }
+        });
+        let uuid = viewer.addTag(number, location, { fontSize: 50 }, () => {
+          viewer.showDialog("", regulation, "關閉", null, null, true);
+        });
+        tags.push({ uuid: uuid, location: location, number: number, regulation: regulation, elementIndexArray: elementIndexArray });
+      });
+
+      //add custom buttons
+      Object.keys(regulations).map((k) => {
+        viewer.addCustomButton(`regulation_${k}`, `collection-item-${k}`, "#e91e63", k, () => highlightElements(viewer, k, regulations[k], tags));
+      });
+
+      setCurrentTags(tags);
+      setShowPreloader(false);
+    }, onError);
+   
+  }
 
   const highlightElements = (viewer, number, regulation, tags) => {
     setHeaderContent(`[${number}] ${regulation}`);
     let elementIndexArray = [];
-    tags.map((t)=>{
-      if(number==t.number){
+    tags.map((t) => {
+      if (number == t.number) {
         elementIndexArray = t.elementIndexArray;
       }
     });
-    
+
     viewer.setColor(elementIndexArray, new window.THREE.Color(0xff0000));
 
     let bbox = viewer.getBoundingBox(elementIndexArray);
-      viewer.setSectionBox(bbox.min, bbox.max);
-      viewer.toggleSectionbox(true);
-      viewer.zoomToFit();
-      viewer.toggleSectionbox(false);
-      setTimeout(() => { viewer.resetVisibility(); }, 1000);
+    viewer.setSectionBox(bbox.min, bbox.max);
+    viewer.toggleSectionbox(true);
+    viewer.zoomToFit();
+    viewer.toggleSectionbox(false);
+    setTimeout(() => { viewer.resetVisibility(); }, 1000);
   }
 
 
@@ -175,7 +185,7 @@ const App = () => {
             {headerContent}
           </Typography>
           {showPreloader ? (
-            <Box style={{ marginLeft: window.innerWidth/2-20, marginTop: window.innerHeight/2-20 }}>
+            <Box style={{ marginLeft: window.innerWidth / 2 - 20, marginTop: window.innerHeight / 2 - 20 }}>
               <CircularProgress />
             </Box>
           ) : undefined}
