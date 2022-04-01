@@ -141,7 +141,7 @@ const App = () => {
 
   useEffect(() => {
     Object.keys(modelRegulation).map((k) => {
-      window.viewer.addCustomButton(`regulation_${k}`, `collection-item-${k}`, "#e91e63", "", () => highlightElements(window.viewer, k, modelRegulation[k], currentTags));
+      window.viewer.addCustomButton(`regulation_${k}`, `collection-item-${k}`, "#e91e63", k, () => highlightElements(window.viewer, k, modelRegulation[k], currentTags));
     });
 
   }, [modelRegulation]);
@@ -175,7 +175,7 @@ const App = () => {
             {headerContent}
           </Typography>
           {showPreloader ? (
-            <Box style={{ marginLeft: window.innerWidth / 2, marginTop: window.innerHeight / 2 }}>
+            <Box style={{ marginLeft: window.innerWidth/2-20, marginTop: window.innerHeight/2-20 }}>
               <CircularProgress />
             </Box>
           ) : undefined}
