@@ -8,13 +8,23 @@ import { makeStyles } from '@mui/styles';
 import { REGULATIONS } from './safetyRegulationConfig';
 import { isTwoPointsTooClose } from './ViewerHelper';
 import CircularProgress from '@mui/material/CircularProgress';
+import { highlightElements, getRegulations } from './helpers/bimuHelper'
+import BimuManager from './services/BimuManager';
 
 
 const onError = (e) => console.error(e);
 
+// Viewer configuration object
+const VIEWER_CONFIG = {
+  domElementId: "viewer",
+  showUI: true
+};
+const IMG_WIDTH = '80%';
+
 const App = () => {
   const classes = useStyles();
   const urlParams = new URLSearchParams(window.location.search);
+  const imgFolder = !!urlParams.get('imgFolder') ? urlParams.get('imgFolder') : undefined;
 
   const [modelRegulation, setModelRegulation] = useState({});
   const [currentTags, setCurrentTags] = useState([]);
@@ -22,36 +32,12 @@ const App = () => {
   const [showPreloader, setShowPreloader] = useState(false);
 
   useEffect(() => {
-    // Viewer configuration object
-    let viewerConfigs = {
-      domElementId: "viewer",
-      showUI: true
-    };
-
-    // Initialise a Viewer 
-    let viewer = new bimU.Viewer(viewerConfigs);
-    viewer.initialize();
-    window.viewer = viewer;
-
-    // Register selection event
+    // Initialise a Viewer
     let selectedElementIndices;
-    viewer.addEventListener(bimU.EventsEnum.ON_SELECTION_CHANGED, (e) => {
-      // Cache selected element indices	
-      selectedElementIndices = e.selectedElementIndices;
+    let viewer = BimuManager.initViewer(VIEWER_CONFIG, selectedElementIndices);
+    viewer.addCustomButton(`clear-header`, `iridescent`, "#e91e63", "隱藏說明", () => {
+      setHeaderContent();
     });
-
-
-    // viewer.addCustomButton("button-setColor", "flare", "#e91e63", "Highlight", () => {
-    //   if (!selectedElementIndices || selectedElementIndices.length === 0) {
-    //     viewer.showDialog("Warning", "No element is selected.", "Close", null, null, true);
-    //     return;
-    //   }
-    //   viewer.resetVisibility();
-    //   console.log(selectedElementIndices);
-    //   viewer.setColor(selectedElementIndices, new window.THREE.Color(0xff0000));
-
-    // });
-
     // Model configuration object
     let modelConfigs = {
       modelId: urlParams.get('modelId') || "624526f956bd8600048c99ca",
@@ -66,7 +52,7 @@ const App = () => {
       setShowPreloader(true);
       viewer.showDialog("Loading...", "Progress:" + e.progress, "Close", null, null, true);
     };
-    let onLoaded = (e) => {
+    let onLoaded = async (e) => {
       console.log(e);
       viewer.closeDialog();
 
@@ -77,31 +63,37 @@ const App = () => {
       let propertySelector1 = new bimU.PropertySelector(null, "eIdx");
       let propertySelector2 = new bimU.PropertySelector("Text", "勞安_法規內容");
       let propertySelector3 = new bimU.PropertySelector("Text", "勞安_法規編號");
+      let propertySelector4 = new bimU.PropertySelector("Text", "勞安_法規圖片");
 
-      viewer.getElementDataByProperty([propertyFilter1], [propertySelector1, propertySelector2, propertySelector3], 1000, async (data) => {
-        //console.log(data);
-        let regulations = {};
-        data.map((d) => {
-          let n = d.勞安_法規編號.split('@');
-          let r = d.勞安_法規內容.split('@');
-          n.map((num, index) => {
-            regulations[num] = r[index];
+      viewer.getElementDataByProperty([propertyFilter1],
+        [propertySelector1, propertySelector2, propertySelector3, propertySelector4],
+        1000,
+        async (data) => {
+          let regulations = {};
+          let images = {};
+          data.map((d) => {
+            let n = d.勞安_法規編號.split('@');
+            let r = d.勞安_法規內容.split('@');
+            let img = !!d.勞安_法規圖片 ? d.勞安_法規圖片.split('@') : undefined;
+            n.map((num, index) => {
+              regulations[num] = r[index];
+              images[num] = !!img ? img[index] : '0';
+            });
           });
-        });
-        //console.log(regulations);
-        setModelRegulation(regulations);
-        
-        //add tags and buttons
-        addTagsAndButtonsByRegulations(viewer, regulations);
-        
-      }, onError);
+          console.log(regulations);
+          setModelRegulation(regulations);
+
+          //add tags and buttons
+          addTagsAndButtonsByRegulations(viewer, regulations, images);
+
+        }, onError);
     };
 
     // Load a model
     viewer.loadModel(modelConfigs, onPorgress, onLoaded, onError);
   }, []);
 
-  const addTagsAndButtonsByRegulations = async (viewer, regulations) => {
+  const addTagsAndButtonsByRegulations = async (viewer, regulations, images) => {
     let tags = [];
     //get eIdx by regulations
     let selectExpression = `"eIdx" AS "eIdx", "Text:勞安_法規編號" AS "勞安_法規編號"`;
@@ -112,7 +104,7 @@ const App = () => {
     let filterExpression = `${filterExpressions.join(' OR ')}`;
 
     viewer.getElementDataByQuery(filterExpression, selectExpression, 1000, (data) => {
-      // console.log(data);
+      console.log(data);
       let eIdxByRegulation = {};
       data.map((d) => {
         d.勞安_法規編號.split('@').map((number) => {
@@ -130,6 +122,7 @@ const App = () => {
       Object.keys(eIdxByRegulation).map((number) => {
         let elementIndexArray = eIdxByRegulation[number];
         let regulation = regulations[number];
+        let image = images[number];
         let bbox = viewer.getBoundingBox(elementIndexArray);
         let centroid = new window.THREE.Vector3();
         bbox.getCenter(centroid);
@@ -139,51 +132,49 @@ const App = () => {
             location.z += 0.4;
           }
         });
+        let imgTag = !!imgFolder && !!image && image != '0' ? `<img src="/images/${imgFolder}/${image}" style="width:${IMG_WIDTH};" >` : '';
         let uuid = viewer.addTag(number, location, { fontSize: 50 }, () => {
-          viewer.showDialog("", regulation, "關閉", null, null, true);
+          viewer.showDialog("",
+            `<p>${regulation}</p>` + imgTag
+            , "關閉", null, null, true);
         });
         tags.push({ uuid: uuid, location: location, number: number, regulation: regulation, elementIndexArray: elementIndexArray });
       });
 
       //add custom buttons
       Object.keys(regulations).map((k) => {
-        viewer.addCustomButton(`regulation_${k}`, `collection-item-${k}`, "#e91e63", k, () => highlightElements(viewer, k, regulations[k], tags));
+        viewer.addCustomButton(`regulation_${k}`, `collection-item-${k > 9 ? '9-plus' : k}`, "#e91e63", k, () => {
+          let contents = [];
+          regulations[k].split("。").map((r, i) => {
+            if (r.length == 0) return;
+            contents.push(
+              <Typography key={`regulation_${k}_${i}`} variant="body1" className={classes.headerContent} component="p">
+                {i == 0 ? `[${k}]` : undefined}{r + "。"}
+              </Typography>)
+          });
+          if (!!imgFolder && images[k] != '0') {
+            contents.push(
+              <Typography key={`${imgFolder}_${images[k]}`} variant="body1" className={classes.headerContent} component="div">
+                <img src={`/images/${imgFolder}/${images[k]}`} style={{ width: IMG_WIDTH }} ></img>
+              </Typography>
+            );
+          }
+
+          setHeaderContent(contents);
+          highlightElements(viewer, k, regulations[k], tags);
+        });
       });
 
       setCurrentTags(tags);
       setShowPreloader(false);
     }, onError);
-   
   }
-
-  const highlightElements = (viewer, number, regulation, tags) => {
-    setHeaderContent(`[${number}] ${regulation}`);
-    let elementIndexArray = [];
-    tags.map((t) => {
-      if (number == t.number) {
-        elementIndexArray = t.elementIndexArray;
-      }
-    });
-
-    viewer.setColor(elementIndexArray, new window.THREE.Color(0xff0000));
-
-    let bbox = viewer.getBoundingBox(elementIndexArray);
-    viewer.setSectionBox(bbox.min, bbox.max);
-    viewer.toggleSectionbox(true);
-    viewer.zoomToFit();
-    viewer.toggleSectionbox(false);
-    setTimeout(() => { viewer.resetVisibility(); }, 1000);
-  }
-
-
 
   return (
     <React.Fragment>
       <Box position="relative" style={{ width: window.innerWidth, height: window.innerHeight }}>
         <Box id="viewer-overlay" className={classes.viewerOverlay}>
-          <Typography variant="h6" className={classes.headerContent} gutterBottom component="div">
-            {headerContent}
-          </Typography>
+          {headerContent}
           {showPreloader ? (
             <Box style={{ marginLeft: window.innerWidth / 2 - 20, marginTop: window.innerHeight / 2 - 20 }}>
               <CircularProgress />
