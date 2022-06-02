@@ -8,8 +8,9 @@ import { makeStyles } from '@mui/styles';
 import { REGULATIONS } from './safetyRegulationConfig';
 import { isTwoPointsTooClose } from './ViewerHelper';
 import CircularProgress from '@mui/material/CircularProgress';
-import { highlightElements, getRegulations } from './helpers/bimuHelper'
+import { highlightElements, getRegulations, addTags, addRegulationButtons } from './helpers/bimuHelper'
 import BimuManager from './services/BimuManager';
+import { stepContentClasses } from '@mui/material';
 
 
 const onError = (e) => console.error(e);
@@ -19,7 +20,7 @@ const VIEWER_CONFIG = {
   domElementId: "viewer",
   showUI: true
 };
-const IMG_WIDTH = '80%';
+
 
 const App = () => {
   const classes = useStyles();
@@ -94,7 +95,6 @@ const App = () => {
   }, []);
 
   const addTagsAndButtonsByRegulations = async (viewer, regulations, images) => {
-    let tags = [];
     //get eIdx by regulations
     let selectExpression = `"eIdx" AS "eIdx", "Text:勞安_法規編號" AS "勞安_法規編號"`;
     let filterExpressions = [];
@@ -117,54 +117,10 @@ const App = () => {
       });
       // console.log(eIdxByRegulation);
 
-      // add tags
-      viewer.resetVisibility();
-      Object.keys(eIdxByRegulation).map((number) => {
-        let elementIndexArray = eIdxByRegulation[number];
-        let regulation = regulations[number];
-        let image = images[number];
-        let bbox = viewer.getBoundingBox(elementIndexArray);
-        let centroid = new window.THREE.Vector3();
-        bbox.getCenter(centroid);
-        let location = new window.THREE.Vector3(bbox.max.x, bbox.max.y, bbox.max.z + 0.25);
-        tags.map((t) => {
-          if (isTwoPointsTooClose(t.location, location, 0.5)) {
-            location.z += 0.4;
-          }
-        });
-        let imgTag = !!imgFolder && !!image && image != '0' ? `<img src="/images/${imgFolder}/${image}" style="width:${IMG_WIDTH};" >` : '';
-        let uuid = viewer.addTag(number, location, { fontSize: 50 }, () => {
-          viewer.showDialog("",
-            `<p>${regulation}</p>` + imgTag
-            , "關閉", null, null, true);
-        });
-        tags.push({ uuid: uuid, location: location, number: number, regulation: regulation, elementIndexArray: elementIndexArray });
-      });
+      let tags = addTags(viewer, regulations, eIdxByRegulation, imgFolder, images);
+      let contents = addRegulationButtons(classes, viewer, regulations,imgFolder, images, tags);
 
-      //add custom buttons
-      Object.keys(regulations).map((k) => {
-        viewer.addCustomButton(`regulation_${k}`, `collection-item-${k > 9 ? '9-plus' : k}`, "#e91e63", k, () => {
-          let contents = [];
-          regulations[k].split("。").map((r, i) => {
-            if (r.length == 0) return;
-            contents.push(
-              <Typography key={`regulation_${k}_${i}`} variant="body1" className={classes.headerContent} component="p">
-                {i == 0 ? `[${k}]` : undefined}{r + "。"}
-              </Typography>)
-          });
-          if (!!imgFolder && images[k] != '0') {
-            contents.push(
-              <Typography key={`${imgFolder}_${images[k]}`} variant="body1" className={classes.headerContent} component="div">
-                <img src={`/images/${imgFolder}/${images[k]}`} style={{ width: IMG_WIDTH }} ></img>
-              </Typography>
-            );
-          }
-
-          setHeaderContent(contents);
-          highlightElements(viewer, k, regulations[k], tags);
-        });
-      });
-
+      setHeaderContent(contents);
       setCurrentTags(tags);
       setShowPreloader(false);
     }, onError);
