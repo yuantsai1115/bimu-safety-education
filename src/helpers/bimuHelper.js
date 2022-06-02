@@ -27,6 +27,15 @@ export const highlightElements = (viewer, number, regulation, tags) => {
   }, 1000);
 };
 
+export const sortRegulations = (regulations) => {
+  return Object.keys(regulations)
+    .sort()
+    .reduce((obj, key) => {
+      obj[key] = regulations[key];
+      return obj;
+    }, {});
+};
+
 export const addTags = (
   viewer,
   regulations,
@@ -34,6 +43,8 @@ export const addTags = (
   imgFolder,
   images
 ) => {
+//   console.log(eIdxByRegulation);
+//   console.log(regulations);
   let tags = [];
   viewer.resetVisibility();
   Object.keys(eIdxByRegulation).map((key) => {
@@ -57,16 +68,27 @@ export const addTags = (
       !!imgFolder && !!image && image != "0"
         ? `<img src="/images/${imgFolder}/${image}" style="width:${IMG_WIDTH};" >`
         : "";
-    let uuid = viewer.addTag(key, location, { fontSize: 50 }, () => {
-      viewer.showDialog(
-        "",
-        `<p>${regulation}</p>` + imgTag,
-        "關閉",
-        null,
-        null,
-        true
-      );
-    });
+    let uuid = viewer.addTag(
+      key,
+      location,
+      { fontSize: 50, shape: "rectangular" },
+      () => {
+        viewer.showDialog(
+          "",
+          regulation
+            .split("。")
+            .filter((s) => s !== "")
+            .map((r) => {
+              return `<p>${r}。</p>`;
+            })
+            .join("") + imgTag,
+          "關閉",
+          null,
+          null,
+          true
+        );
+      }
+    );
     tags.push({
       uuid: uuid,
       location: location,
@@ -75,7 +97,6 @@ export const addTags = (
       elementIndexArray: elementIndexArray,
     });
   });
-
   return tags;
 };
 
@@ -85,19 +106,21 @@ export const addRegulationButtons = (
   regulations,
   imgFolder,
   images,
-  tags
+  tags,
+  setHeaderContent
 ) => {
   Object.keys(regulations).map((key) => {
-    console.log(key);
+    // console.log(key);
     let k = key.split(" ")[0];
+    let kName = !!key.split(" ")[1] ? key.split(" ")[1] : "";
     viewer.addCustomButton(
       `regulation_${k}`,
       `collection-item-${k > 9 ? "9-plus" : k}`,
       "#e91e63",
-      k,
+      kName,
       () => {
         let contents = [];
-        regulations[k].split("。").map((r, i) => {
+        regulations[key].split("。").map((r, i) => {
           if (r.length == 0) return;
           contents.push(
             <Typography
@@ -111,24 +134,23 @@ export const addRegulationButtons = (
             </Typography>
           );
         });
-        if (!!imgFolder && images[k] != "0") {
+        if (!!imgFolder && images[key] != "0") {
           contents.push(
             <Typography
-              key={`${imgFolder}_${images[k]}`}
+              key={`${imgFolder}_${images[key]}`}
               variant="body1"
               className={classes.headerContent}
               component="div"
             >
               <img
-                src={`/images/${imgFolder}/${images[k]}`}
+                src={`/images/${imgFolder}/${images[key]}`}
                 style={{ width: IMG_WIDTH }}
               ></img>
             </Typography>
           );
         }
-
-        highlightElements(viewer, k, regulations[k], tags);
-        return contents;
+        highlightElements(viewer, key, regulations[key], tags);
+        setHeaderContent(contents);
       }
     );
   });
