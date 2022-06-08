@@ -15,16 +15,31 @@ export const highlightElements = (viewer, number, regulation, tags) => {
     }
   });
 
-  viewer.setColor(elementIndexArray, new window.THREE.Color(0xff0000));
+  
 
   let bbox = viewer.getBoundingBox(elementIndexArray);
   viewer.setSectionBox(bbox.min, bbox.max);
   viewer.toggleSectionbox(true);
   viewer.zoomToFit();
   viewer.toggleSectionbox(false);
+
+    viewer.setColor(elementIndexArray, new window.THREE.Color(0xffff00));
+  setTimeout(() => {
+    viewer.setColor(elementIndexArray, new window.THREE.Color(0xDCDCDC));
+  }, 300);
+  setTimeout(() => {
+    viewer.setColor(elementIndexArray, new window.THREE.Color(0xffff00));
+  }, 600);
+  setTimeout(() => {
+    viewer.setColor(elementIndexArray, new window.THREE.Color(0xDCDCDC));
+  }, 900);
+  setTimeout(() => {
+    viewer.setColor(elementIndexArray, new window.THREE.Color(0xffff00));
+  }, 1200);
+
   setTimeout(() => {
     viewer.resetVisibility();
-  }, 1000);
+  }, 1800);
 };
 
 export const sortRegulations = (regulations) => {
