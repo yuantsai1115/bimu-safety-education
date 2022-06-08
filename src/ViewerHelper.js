@@ -8,6 +8,5 @@ export const isTwoPointsTooClose = (ptA, ptB, distance) => {
         && Math.abs(ptA.z-ptB.z) <= distance) {
         result = true;
     }
-
     return result;
 }

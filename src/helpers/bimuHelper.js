@@ -6,6 +6,7 @@ import Typography from "@mui/material/Typography";
 import { makeStyles } from "@mui/styles";
 
 const IMG_WIDTH = "80%";
+const IMG_MAX_HEIGHT = '150px';
 
 export const highlightElements = (viewer, number, regulation, tags) => {
   let elementIndexArray = [];
@@ -75,13 +76,13 @@ export const addTags = (
       bbox.max.z + 0.25
     );
     tags.map((t) => {
-      if (isTwoPointsTooClose(t.location, location, 0.5)) {
-        location.z += 0.4;
+      if (isTwoPointsTooClose(t.location, location, 1)) {
+        location.z += 0.8;
       }
     });
     let imgTag =
       !!imgFolder && !!image && image != "0"
-        ? `<img src="/images/${imgFolder}/${image}" style="width:${IMG_WIDTH};" >`
+        ? `<img src="/images/${imgFolder}/${image}" style="width:${IMG_WIDTH}; max-height:${IMG_MAX_HEIGHT};" >`
         : "";
     let uuid = viewer.addTag(
       key,
@@ -159,7 +160,7 @@ export const addRegulationButtons = (
             >
               <img
                 src={`/images/${imgFolder}/${images[key]}`}
-                style={{ width: IMG_WIDTH }}
+                style={{ maxHeight: IMG_MAX_HEIGHT }}
               ></img>
             </Typography>
           );
