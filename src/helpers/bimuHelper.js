@@ -70,7 +70,7 @@ export const addTags = (
     let elementIndexArray = eIdxByRegulation[key];
     let regulation = regulations[key];
     let image = images[key];
-    let bbox = viewer.getBoundingBox(elementIndexArray).expandByScalar(1);
+    let bbox = viewer.getBoundingBox(elementIndexArray).expandByScalar(1.8);
     let centroid = new window.THREE.Vector3();
     bbox.getCenter(centroid);
     let location = new window.THREE.Vector3(
