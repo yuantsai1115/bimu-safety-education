@@ -45,7 +45,9 @@ export const highlightElements = (viewer, number, regulation, tags) => {
 
 export const sortRegulations = (regulations) => {
   return Object.keys(regulations)
-    .sort()
+    .sort((a, b)=>{
+      return parseInt(a.split(' ')[0]) < parseInt(b.split(' ')[0])? -1:0;
+    })
     .reduce((obj, key) => {
       obj[key] = regulations[key];
       return obj;
@@ -59,7 +61,7 @@ export const addTags = (
   imgFolder,
   images
 ) => {
-//   console.log(eIdxByRegulation);
+  console.log(eIdxByRegulation);
 //   console.log(regulations);
   let tags = [];
   viewer.resetVisibility();
@@ -67,12 +69,14 @@ export const addTags = (
     let elementIndexArray = eIdxByRegulation[key];
     let regulation = regulations[key];
     let image = images[key];
-    let bbox = viewer.getBoundingBox(elementIndexArray);
+    let bbox = viewer.getBoundingBox(elementIndexArray).expandByScalar(1);
     let centroid = new window.THREE.Vector3();
     bbox.getCenter(centroid);
     let location = new window.THREE.Vector3(
       bbox.max.x,
+      // (bbox.max.x + bbox.min.x)/2,
       bbox.max.y,
+      // (bbox.max.y + bbox.min.y)/2,
       bbox.max.z + 0.25
     );
     tags.map((t) => {
@@ -87,7 +91,7 @@ export const addTags = (
     let uuid = viewer.addTag(
       key,
       location,
-      { fontSize: 50, shape: "rectangular" },
+      { fontSize: 50, shape: "rectangular", visibleBehindObjects: true },
       () => {
         viewer.showDialog(
           "",
@@ -126,7 +130,7 @@ export const addRegulationButtons = (
   setHeaderContent
 ) => {
   Object.keys(regulations).map((key) => {
-    // console.log(key);
+    console.log(key);
     let k = key.split(" ")[0];
     let kName = !!key.split(" ")[1] ? key.split(" ")[1] : "";
     viewer.addCustomButton(
