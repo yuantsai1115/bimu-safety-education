@@ -86,7 +86,7 @@ export const addTags = (
     });
     let imgTag =
       !!imgFolder && !!image && image != "0"
-        ? `<img src="/images/${imgFolder}/${image}" style="width:${IMG_WIDTH}; max-height:${IMG_MAX_HEIGHT};" >`
+        ? `<img src="/images/${imgFolder}/${image}" style="max-height:${IMG_MAX_HEIGHT};" >`
         : "";
     let uuid = viewer.addTag(
       key,
