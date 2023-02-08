@@ -98,25 +98,28 @@ const App = () => {
         "勞安_法規圖片"
       );
 
+      let propertySelectors = [
+        propertySelector1,
+        propertySelector2,
+        propertySelector3,
+      ];
+      if(imgFolder){
+        propertySelectors.push(propertySelector4);
+      }
       viewer.getElementDataByProperty(
         [propertyFilter1],
-        [
-          propertySelector1,
-          propertySelector2,
-          propertySelector3,
-          propertySelector4,
-        ],
+        propertySelectors,
         1000,
         async (data) => {
           let regulations = {};
           let images = {};
           data.map((d) => {
-            let n = d.勞安_法規編號.split("@");
-            let r = d.勞安_法規內容.split("@");
-            let img = !!d.勞安_法規圖片
-              ? d.勞安_法規圖片.split("@")
+            let n = d?.勞安_法規編號?.split("@");
+            let r = d?.勞安_法規內容?.split("@");
+            let img = !!d?.勞安_法規圖片
+              ? d?.勞安_法規圖片?.split("@")
               : undefined;
-            n.map((num, index) => {
+            n?.map((num, index) => {
               regulations[num] = r[index];
               images[num] = !!img ? img[index] : "0";
             });
