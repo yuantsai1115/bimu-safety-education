@@ -31,7 +31,7 @@ const App = () => {
   const urlParams = new URLSearchParams(window.location.search);
   const imgFolder = !!urlParams.get("imgFolder")
     ? urlParams.get("imgFolder")
-    : undefined;
+    : (urlParams.get("modelId")? undefined : "鄰路作業");
 
   const [modelRegulation, setModelRegulation] = useState({});
   const [currentTags, setCurrentTags] = useState([]);
@@ -53,7 +53,7 @@ const App = () => {
     );
     // Model configuration object
     let modelConfigs = {
-      modelId: urlParams.get("modelId") || "624526f956bd8600048c99ca",
+      modelId: urlParams.get("modelId") || "62b5a52d7e10c10004b5d619",
       // Either access token or password must be specified
       password: "",
       // accessToken: "YOUR_ACCESS_TOKEN"
