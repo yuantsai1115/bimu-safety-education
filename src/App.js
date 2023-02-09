@@ -159,8 +159,8 @@ const App = () => {
       (data) => {
         console.log(data);
         let eIdxByRegulation = {};
-        data.map((d) => {
-          d.勞安_法規編號.split("@").map((number) => {
+        data?.map((d) => {
+          d.勞安_法規編號?.split("@").map((number) => {
             if (Array.isArray(eIdxByRegulation[number])) {
               eIdxByRegulation[number].push(parseInt(d.eIdx));
             } else {
