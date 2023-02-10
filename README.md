@@ -6,13 +6,13 @@
 - [Project Setup](#project-setup)
 - [Thanks](#thanks)
 - [Copyright and license](#copyright-and-license) -->
-
+<!-- <img src="https://user-images.githubusercontent.com/119405090/218034217-39391de8-3ff6-430e-85fa-f850ab60ead1.mp4" width="100"/> -->
+<!-- <video src="https://user-images.githubusercontent.com/119405090/218034217-39391de8-3ff6-430e-85fa-f850ab60ead1.mp4" width="50" controls="controls" muted="muted" playsinline="playsinline"></video> -->
 
 # 3D Construction Safety Training
-
-https://user-images.githubusercontent.com/119405090/218034217-39391de8-3ff6-430e-85fa-f850ab60ead1.mp4
-
 A web-based building information model (BIM) viewer for safety training on construction site. The viewer is powered by bimU Viewer APIs.
+
+[Safety Training.mp4](https://user-images.githubusercontent.com/119405090/218034217-39391de8-3ff6-430e-85fa-f850ab60ead1.mp4)
 
 ## Features
 - Easily switch to your own BIM models
@@ -22,48 +22,24 @@ A web-based building information model (BIM) viewer for safety training on const
 ## Live Demo
 Main branch is deployed to https://safety-education.netlify.app/.
 
-## Development
+## Project Setup
 
+### Rules for Element Properties
+1. 4 custom fields for all elements in BIM models including 勞安_法規內容, 勞安_法規編號, 勞安_法規圖片, 勞安_法規影片.
+2. Seperate by '@' for multiple rules in the same element (applied to all fields).
 
-## What's included
+![模型元件填入資料說明](https://user-images.githubusercontent.com/119405090/218041642-e19c1a92-b64b-4db2-adf9-91e41863ae35.png)
 
-Some text
+### Prerequisites
+- BIM model uploaded to [bimU Viewer](https://viewer.bimu.io)
+- `model id` from bimU Viewer
 
-```text
-folder1/
-└── folder2/
-    ├── folder3/
-    │   ├── file1
-    │   └── file2
-    └── folder4/
-        ├── file3
-        └── file4
-```
-
-## Bugs and feature requests
-
-Have a bug or a feature request? Please first read the [issue guidelines](https://reponame/blob/master/CONTRIBUTING.md) and search for existing and closed issues. If your problem or idea is not addressed yet, [please open a new issue](https://reponame/issues/new).
-
-## Contributing
-
-Please read through our [contributing guidelines](https://reponame/blob/master/CONTRIBUTING.md). Included are directions for opening issues, coding standards, and notes on development.
-
-Moreover, all HTML and CSS should conform to the [Code Guide](https://github.com/mdo/code-guide), maintained by [Main author](https://github.com/usernamemainauthor).
-
-Editor preferences are available in the [editor config](https://reponame/blob/master/.editorconfig) for easy use in common text editors. Read more and download plugins at <https://editorconfig.org/>.
-
-## Creators
-
-**Creator 1**
-
-- <https://github.com/usernamecreator1>
-
-## Thanks
-
-Some Text
-
-## Copyright and license
-
-Code and documentation copyright 2011-2018 the authors. Code released under the [MIT License](https://reponame/blob/master/LICENSE).
+### Setup
+- clone this repository
+- install dependencies: `npm install`
+- run server: `npm start`
+- go to http://localhost:3000
+    - add url parameter `modelId` to specify your own model
+    - add url parameter `imgFolder` for the name of image folder accommdated the training materials (same as the name in the public folder of repo)
 
 Enjoy :metal:
