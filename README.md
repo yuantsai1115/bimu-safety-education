@@ -1,26 +1,31 @@
-## Table of contents
+<!-- # Table of contents
 
-- [Quick start](#quick-start)
-- [Status](#status)
-- [What's included](#whats-included)
-- [Bugs and feature requests](#bugs-and-feature-requests)
-- [Contributing](#contributing)
-- [Creators](#creators)
+- [Description](#description)
+- [Live Demo](#live-demo)
+- [Prerequisites](#prerequisites)
+- [Project Setup](#project-setup)
 - [Thanks](#thanks)
-- [Copyright and license](#copyright-and-license)
+- [Copyright and license](#copyright-and-license) -->
 
 
-## Quick start
+# 3D Construction Safety Training
+<!-- <div align="center">
 
-Some text
+[![license](https://img.shields.io/pypi/l/ansicolortags.svg)](LICENSE) [![Release](https://img.shields.io/github/release/memochou1993/gpt-ai-assistant)](https://GitHub.com/memochou1993/gpt-ai-assistant/releases/)
 
-- Instruction 1
-- Instruction 2
-- Instruction 3
+</div> -->
+A web-based building information model (BIM) viewer for safety training on construction site. The viewer is powered by bimU Viewer APIs.
 
-## Status
+## Features
+- Easily switch to your own BIM models
+- Provide images and specification for each critical area
+- Highlight BIM elements with animation for each critical area
 
-Here goes all the budgets
+## Live Demo
+Main branch is deployed to https://safety-education.netlify.app/.
+
+## Development
+
 
 ## What's included
 
