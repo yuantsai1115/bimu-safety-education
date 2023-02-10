@@ -9,11 +9,9 @@
 
 
 # 3D Construction Safety Training
-<!-- <div align="center">
 
-[![license](https://img.shields.io/pypi/l/ansicolortags.svg)](LICENSE) [![Release](https://img.shields.io/github/release/memochou1993/gpt-ai-assistant)](https://GitHub.com/memochou1993/gpt-ai-assistant/releases/)
+https://user-images.githubusercontent.com/119405090/218034217-39391de8-3ff6-430e-85fa-f850ab60ead1.mp4
 
-</div> -->
 A web-based building information model (BIM) viewer for safety training on construction site. The viewer is powered by bimU Viewer APIs.
 
 ## Features
