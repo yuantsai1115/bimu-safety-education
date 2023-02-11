@@ -31,6 +31,7 @@ Main branch is deployed to https://safety-education.netlify.app/.
 ![模型元件填入資料說明](https://user-images.githubusercontent.com/119405090/218041642-e19c1a92-b64b-4db2-adf9-91e41863ae35.png)
 
 ### Prerequisites
+- Node.js v16 and above
 - BIM model uploaded to [bimU Viewer](https://viewer.bimu.io)
 - `model id` from bimU Viewer
 
